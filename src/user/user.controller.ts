@@ -14,9 +14,9 @@ import {
 import { Observable } from 'rxjs';
 import { UserModel } from './user.model';
 import { UserService } from './user.service';
-import { UserIdPipe } from './pipes/userId.pipe';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-transfer.dto';
+import { IdPipe } from '../pipes/id.pipe';
 
 @Controller('user')
 export class UserController {
@@ -27,7 +27,7 @@ export class UserController {
     return this.userService.getAllUsers();
   }
 
-  @UsePipes(new UserIdPipe())
+  @UsePipes(new IdPipe())
   @Get(':id')
   getUser(@Param() { id }: { id: string }): Observable<UserModel> {
     return this.userService.getUser(id);
@@ -43,7 +43,7 @@ export class UserController {
 
   @Put(':id')
   @UsePipes(new ValidationPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }))
-  @UsePipes(new UserIdPipe())
+  @UsePipes(new IdPipe())
   updateUser(
     @Param() { id }: { id: string },
     @Body() { oldPassword, newPassword }: UpdatePasswordDto,
@@ -52,7 +52,7 @@ export class UserController {
   }
 
   @Delete(':id')
-  @UsePipes(new UserIdPipe())
+  @UsePipes(new IdPipe())
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteUser(@Param() { id }: { id: string }): Observable<UserModel> {
     return this.userService.deleteUser(id);

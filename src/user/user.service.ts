@@ -63,8 +63,6 @@ export class UserService {
   }
 
   deleteUser(id: string): Observable<UserModel> {
-    return this.getUser(id).pipe(
-      switchMap((updatedUser) => this.db.deleteUser(updatedUser)),
-    );
+    return this.getUser(id).pipe(switchMap((user) => this.db.deleteUser(user)));
   }
 }
