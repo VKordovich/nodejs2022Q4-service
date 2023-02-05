@@ -58,11 +58,11 @@ export class TrackService {
           albumId: albumId ?? track.albumId,
         };
       }),
-      switchMap((updatedUser) => this.db.setTracks(updatedUser)),
+      switchMap((updatedTrack) => this.db.setTracks(updatedTrack)),
     );
   }
 
-  deleteTrack(id: string) {
+  deleteTrack(id: string): Observable<TrackModel> {
     return this.getTrack(id).pipe(
       switchMap((track) => this.db.deleteTrack(track)),
     );

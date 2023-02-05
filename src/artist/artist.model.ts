@@ -1,1 +1,5 @@
-export class ArtistModel {}
+export class ArtistModel {
+  id: string;
+  name: string;
+  grammy: boolean;
+}
