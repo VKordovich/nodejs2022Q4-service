@@ -13,7 +13,7 @@ import {
   tap,
 } from 'rxjs';
 import { UserModel } from './user.model';
-import { DbService } from '../db.service';
+import { DbService } from '../db/db.service';
 import { User } from './entity/user.entity';
 
 @Injectable()

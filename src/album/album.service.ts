@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DbService } from '../db.service';
+import { DbService } from '../db/db.service';
 import {
   catchError,
   from,

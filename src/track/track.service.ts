@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DbService } from '../db.service';
+import { DbService } from '../db/db.service';
 import {
   catchError,
   from,
@@ -25,7 +25,7 @@ export class TrackService {
       switchMap((tracks) => from(tracks)),
       single((track) => track.id === id),
       catchError(() => {
-        throw new NotFoundException('User not found');
+        throw new NotFoundException('Track not found');
       }),
     );
   }
