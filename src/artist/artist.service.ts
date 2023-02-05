@@ -23,7 +23,7 @@ export class ArtistService {
   getArtist(id: string): Observable<ArtistModel> {
     return this.db.getArtists().pipe(
       switchMap((artists) => from(artists)),
-      single((track) => track.id === id),
+      single((artist) => artist.id === id),
       catchError(() => {
         throw new NotFoundException('User not found');
       }),
@@ -37,8 +37,8 @@ export class ArtistService {
 
   updateArtist(
     id: string,
-    name: string,
-    grammy: boolean,
+    name?: string,
+    grammy?: boolean,
   ): Observable<ArtistModel> {
     return this.getArtist(id).pipe(
       tap((artist) => this.db.deleteArtist(artist)),
