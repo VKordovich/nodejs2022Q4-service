@@ -23,28 +23,26 @@ export class ArtistController {
   constructor(private artistService: ArtistService) {}
 
   @Get()
-  getAllTracks(): Observable<ArtistModel[]> {
+  getAll(): Observable<ArtistModel[]> {
     return this.artistService.getAllArtists();
   }
 
   @UsePipes(new IdPipe())
   @Get(':id')
-  getTrack(@Param() { id }: { id: string }): Observable<ArtistModel> {
+  getById(@Param() { id }: { id: string }): Observable<ArtistModel> {
     return this.artistService.getArtist(id);
   }
 
   @Post()
   @UsePipes(new ValidationPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }))
-  createTrack(
-    @Body() { name, grammy }: CreateArtistDto,
-  ): Observable<ArtistModel> {
+  create(@Body() { name, grammy }: CreateArtistDto): Observable<ArtistModel> {
     return this.artistService.createArtist(name, grammy);
   }
 
   @Put(':id')
   @UsePipes(new ValidationPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }))
   @UsePipes(new IdPipe())
-  updateTrack(
+  update(
     @Param() { id }: { id: string },
     @Body() { name, grammy }: UpdateArtistDto,
   ): Observable<ArtistModel> {
@@ -54,7 +52,7 @@ export class ArtistController {
   @Delete(':id')
   @UsePipes(new IdPipe())
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteUser(@Param() { id }: { id: string }): Observable<ArtistModel> {
+  delete(@Param() { id }: { id: string }): Observable<boolean> {
     return this.artistService.deleteArtist(id);
   }
 }

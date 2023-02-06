@@ -24,9 +24,16 @@ export class UserService {
     return this.db.getUsers();
   }
 
-  createUser(login: string, password: string): Observable<UserModel> {
+  createUser(
+    login: string,
+    password: string,
+  ): Observable<Omit<UserModel, 'password'>> {
     const user: UserModel = new User(login, password);
-    return this.db.setUsers(user);
+    return this.db.setUsers(user).pipe(
+      map(({ password, ...rest }) => {
+        return { ...rest, version: ++rest.version };
+      }),
+    );
   }
 
   getUser(id: string): Observable<UserModel> {
@@ -43,7 +50,7 @@ export class UserService {
     id: string,
     oldPassword: string,
     password: string,
-  ): Observable<UserModel> {
+  ): Observable<Omit<UserModel, 'password'>> {
     return this.getUser(id).pipe(
       tap((user) => {
         if (user.password !== oldPassword)
@@ -55,10 +62,13 @@ export class UserService {
           ...user,
           password,
           version: ++user.version,
-          updatedAt: new Date(),
+          updatedAt: new Date().getTime(),
         };
       }),
       switchMap((updatedUser) => this.db.setUsers(updatedUser)),
+      map(({ password, ...rest }) => {
+        return { ...rest, version: ++rest.version };
+      }),
     );
   }
 

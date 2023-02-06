@@ -1,7 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DbService } from '../db/db.service';
 import {
   catchError,
+  forkJoin,
   from,
   map,
   Observable,
@@ -53,9 +59,33 @@ export class ArtistService {
     );
   }
 
-  deleteArtist(id: string): Observable<ArtistModel> {
-    return this.getArtist(id).pipe(
-      switchMap((artist) => this.db.deleteArtist(artist)),
-    );
+  deleteArtist(id: string): Observable<boolean> {
+    return forkJoin([
+      this.getArtist(id).pipe(
+        switchMap((artist) => this.db.deleteArtist(artist)),
+      ),
+      this.db.getTracks().pipe(
+        switchMap((tracks) => from(tracks)),
+        single(({ artistId }) => artistId === id),
+        tap((track) => {
+          track.artistId = null;
+        }),
+        switchMap((track) => this.db.setTracks(track)),
+        catchError(() => {
+          throw new HttpException('', HttpStatus.NO_CONTENT);
+        }),
+      ),
+      this.db.getFavs().pipe(
+        switchMap(({ artists }) => from(artists)),
+        single((artist) => artist.id === id),
+        catchError(() => {
+          throw new NotFoundException('not fav');
+        }),
+        switchMap((artist) => this.db.deleteArtistFromFav(artist)),
+        catchError(() => {
+          throw new HttpException('', HttpStatus.NO_CONTENT);
+        }),
+      ),
+    ]).pipe(map(() => true));
   }
 }

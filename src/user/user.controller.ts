@@ -23,38 +23,38 @@ export class UserController {
   constructor(private userService: UserService) {}
 
   @Get()
-  getAllUsers(): Observable<UserModel[]> {
+  getAll(): Observable<UserModel[]> {
     return this.userService.getAllUsers();
   }
 
   @UsePipes(new IdPipe())
   @Get(':id')
-  getUser(@Param() { id }: { id: string }): Observable<UserModel> {
+  getById(@Param() { id }: { id: string }): Observable<UserModel> {
     return this.userService.getUser(id);
   }
 
   @Post()
   @UsePipes(new ValidationPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }))
-  createUser(
+  create(
     @Body() { login, password }: CreateUserDto,
-  ): Observable<UserModel> {
+  ): Observable<Omit<UserModel, 'password'>> {
     return this.userService.createUser(login, password);
   }
 
   @Put(':id')
   @UsePipes(new ValidationPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }))
   @UsePipes(new IdPipe())
-  updateUser(
+  update(
     @Param() { id }: { id: string },
     @Body() { oldPassword, newPassword }: UpdatePasswordDto,
-  ): Observable<UserModel> {
+  ): Observable<Omit<UserModel, 'password'>> {
     return this.userService.updateUser(id, oldPassword, newPassword);
   }
 
   @Delete(':id')
   @UsePipes(new IdPipe())
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteUser(@Param() { id }: { id: string }): Observable<UserModel> {
+  delete(@Param() { id }: { id: string }): Observable<UserModel> {
     return this.userService.deleteUser(id);
   }
 }

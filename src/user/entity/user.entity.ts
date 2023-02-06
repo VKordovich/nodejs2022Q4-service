@@ -5,15 +5,15 @@ export class User {
   login: string;
   password: string;
   version: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: number;
+  updatedAt: number;
 
   constructor(login: string, password: string) {
     this.id = uuidv4();
     this.login = login;
     this.password = password;
     this.version = 0;
-    this.createdAt = new Date();
-    this.updatedAt = new Date();
+    this.createdAt = new Date().getTime();
+    this.updatedAt = new Date().getTime();
   }
 }

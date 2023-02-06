@@ -23,19 +23,19 @@ export class TrackController {
   constructor(private trackService: TrackService) {}
 
   @Get()
-  getAllTracks(): Observable<TrackModel[]> {
+  getAll(): Observable<TrackModel[]> {
     return this.trackService.getAllTracks();
   }
 
   @UsePipes(new IdPipe())
   @Get(':id')
-  getTrack(@Param() { id }: { id: string }): Observable<TrackModel> {
+  getById(@Param() { id }: { id: string }): Observable<TrackModel> {
     return this.trackService.getTrack(id);
   }
 
   @Post()
   @UsePipes(new ValidationPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }))
-  createTrack(
+  create(
     @Body() { name, duration, artistId, albumId }: CreateTrackDto,
   ): Observable<TrackModel> {
     return this.trackService.createTrack(name, duration, artistId, albumId);
@@ -44,7 +44,7 @@ export class TrackController {
   @Put(':id')
   @UsePipes(new ValidationPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }))
   @UsePipes(new IdPipe())
-  updateTrack(
+  update(
     @Param() { id }: { id: string },
     @Body() { name, duration, artistId, albumId }: UpdateTrackDto,
   ): Observable<TrackModel> {
@@ -54,7 +54,7 @@ export class TrackController {
   @Delete(':id')
   @UsePipes(new IdPipe())
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteUser(@Param() { id }: { id: string }): Observable<TrackModel> {
+  delete(@Param() { id }: { id: string }): Observable<boolean> {
     return this.trackService.deleteTrack(id);
   }
 }

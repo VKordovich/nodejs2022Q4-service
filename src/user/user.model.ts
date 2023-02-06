@@ -3,6 +3,6 @@ export class UserModel {
   login: string;
   password: string;
   version: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: number;
+  updatedAt: number;
 }

@@ -23,19 +23,19 @@ export class AlbumController {
   constructor(private albumService: AlbumService) {}
 
   @Get()
-  getAllTracks(): Observable<AlbumModel[]> {
+  getAll(): Observable<AlbumModel[]> {
     return this.albumService.getAllAlbums();
   }
 
   @UsePipes(new IdPipe())
   @Get(':id')
-  getTrack(@Param() { id }: { id: string }): Observable<AlbumModel> {
+  getById(@Param() { id }: { id: string }): Observable<AlbumModel> {
     return this.albumService.getAlbum(id);
   }
 
   @Post()
   @UsePipes(new ValidationPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }))
-  createTrack(
+  create(
     @Body() { name, year, artistId }: CreateAlbumDto,
   ): Observable<AlbumModel> {
     return this.albumService.createAlbum(name, year, artistId);
@@ -44,7 +44,7 @@ export class AlbumController {
   @Put(':id')
   @UsePipes(new ValidationPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }))
   @UsePipes(new IdPipe())
-  updateTrack(
+  update(
     @Param() { id }: { id: string },
     @Body() { name, year, artistId }: UpdateAlbumDto,
   ): Observable<AlbumModel> {
@@ -54,7 +54,7 @@ export class AlbumController {
   @Delete(':id')
   @UsePipes(new IdPipe())
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteUser(@Param() { id }: { id: string }): Observable<AlbumModel> {
+  delete(@Param() { id }: { id: string }): Observable<boolean> {
     return this.albumService.deleteAlbum(id);
   }
 }
