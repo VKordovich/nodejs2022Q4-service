@@ -1,90 +1,52 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { DbService } from '../db/db.service';
-import {
-  catchError,
-  forkJoin,
-  from,
-  map,
-  Observable,
-  single,
-  switchMap,
-  tap,
-} from 'rxjs';
-import { ArtistModel } from './artist.model';
-import { Artist } from './entity/artist.entity';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { catchError, forkJoin, from, map, Observable, switchMap } from 'rxjs';
+import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class ArtistService {
-  constructor(private db: DbService) {}
+  constructor(private prisma: PrismaService) {}
 
-  getAllArtists(): Observable<ArtistModel[]> {
-    return this.db.getArtists();
+  getAllArtists(): Observable<any> {
+    return from(this.prisma.artist.findMany());
   }
 
-  getArtist(id: string): Observable<ArtistModel> {
-    return this.db.getArtists().pipe(
-      switchMap((artists) => from(artists)),
-      single((artist) => artist.id === id),
+  getArtist(id: string): Observable<any> {
+    return from(this.prisma.artist.findUnique({ where: { id } })).pipe(
+      map((res) => {
+        if (!res) throw '';
+        return res;
+      }),
       catchError(() => {
         throw new NotFoundException('User not found');
       }),
     );
   }
 
-  createArtist(name: string, grammy: boolean): Observable<ArtistModel> {
-    const artist: ArtistModel = new Artist(name, grammy);
-    return this.db.setArtist(artist);
+  createArtist(name: string, grammy: boolean): Observable<any> {
+    const data = { name, grammy };
+    return from(this.prisma.artist.create({ data }));
   }
 
-  updateArtist(
-    id: string,
-    name?: string,
-    grammy?: boolean,
-  ): Observable<ArtistModel> {
+  updateArtist(id: string, name?: string, grammy?: boolean): Observable<any> {
     return this.getArtist(id).pipe(
-      tap((artist) => this.db.deleteArtist(artist)),
-      map((artist) => {
-        return {
-          ...artist,
-          name: name ?? artist.name,
-          grammy: grammy ?? artist.grammy,
-        };
-      }),
-      switchMap((updatedArtist) => this.db.setArtist(updatedArtist)),
+      switchMap((artist) =>
+        from(
+          this.prisma.artist.update({
+            where: { id },
+            data: {
+              name: name ?? artist.name,
+              grammy: grammy ?? artist.grammy,
+            },
+          }),
+        ),
+      ),
     );
   }
 
   deleteArtist(id: string): Observable<boolean> {
     return forkJoin([
       this.getArtist(id).pipe(
-        switchMap((artist) => this.db.deleteArtist(artist)),
-      ),
-      this.db.getTracks().pipe(
-        switchMap((tracks) => from(tracks)),
-        single(({ artistId }) => artistId === id),
-        tap((track) => {
-          track.artistId = null;
-        }),
-        switchMap((track) => this.db.setTracks(track)),
-        catchError(() => {
-          throw new HttpException('', HttpStatus.NO_CONTENT);
-        }),
-      ),
-      this.db.getFavs().pipe(
-        switchMap(({ artists }) => from(artists)),
-        single((artist) => artist.id === id),
-        catchError(() => {
-          throw new NotFoundException('not fav');
-        }),
-        switchMap((artist) => this.db.deleteArtistFromFav(artist)),
-        catchError(() => {
-          throw new HttpException('', HttpStatus.NO_CONTENT);
-        }),
+        switchMap(() => from(this.prisma.artist.delete({ where: { id } }))),
       ),
     ]).pipe(map(() => true));
   }

@@ -1,35 +1,21 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { DbService } from '../db/db.service';
-import {
-  catchError,
-  forkJoin,
-  from,
-  map,
-  Observable,
-  single,
-  switchMap,
-  tap,
-} from 'rxjs';
-import { TrackModel } from './track.model';
-import { Track } from './entity/track.entity';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { catchError, forkJoin, from, map, Observable, switchMap } from 'rxjs';
+import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class TrackService {
-  constructor(private db: DbService) {}
+  constructor(private prisma: PrismaService) {}
 
-  getAllTracks(): Observable<TrackModel[]> {
-    return this.db.getTracks();
+  getAllTracks(): Observable<any> {
+    return from(this.prisma.track.findMany());
   }
 
-  getTrack(id: string): Observable<TrackModel> {
-    return this.db.getTracks().pipe(
-      switchMap((tracks) => from(tracks)),
-      single((track) => track.id === id),
+  getTrack(id: string): Observable<any> {
+    return from(this.prisma.track.findUnique({ where: { id } })).pipe(
+      map((res) => {
+        if (!res) throw '';
+        return res;
+      }),
       catchError(() => {
         throw new NotFoundException('Track not found');
       }),
@@ -41,46 +27,44 @@ export class TrackService {
     duration: number,
     artistId?: string,
     albumId?: string,
-  ): Observable<TrackModel> {
-    const track: TrackModel = new Track(name, duration, artistId, albumId);
-    return this.db.setTracks(track);
+  ): Observable<any> {
+    const data = {
+      name,
+      duration,
+      artistId: artistId ?? null,
+      albumId: albumId ?? null,
+    };
+    return from(this.prisma.track.create({ data }));
   }
 
   updateTrack(
     id: string,
-    name: string,
-    duration: number,
-    artistId: string | null,
-    albumId: string | null,
-  ): Observable<TrackModel> {
+    name?: string,
+    duration?: number,
+    artistId?: string | null,
+    albumId?: string | null,
+  ): Observable<any> {
     return this.getTrack(id).pipe(
-      tap((track) => this.db.deleteTrack(track)),
-      map((track) => {
-        return {
-          ...track,
-          name: name ?? track.name,
-          duration: duration ?? track.duration,
-          artistId: artistId ?? track.artistId,
-          albumId: albumId ?? track.albumId,
-        };
-      }),
-      switchMap((updatedTrack) => this.db.setTracks(updatedTrack)),
+      switchMap((track) =>
+        from(
+          this.prisma.track.update({
+            where: { id },
+            data: {
+              name: name ?? track.name,
+              duration: duration ?? track.duration,
+              artistId: artistId ?? track.artistId,
+              albumId: albumId ?? track.albumId,
+            },
+          }),
+        ),
+      ),
     );
   }
 
   deleteTrack(id: string): Observable<boolean> {
     return forkJoin([
-      this.getTrack(id).pipe(switchMap((track) => this.db.deleteTrack(track))),
-      this.db.getFavs().pipe(
-        switchMap(({ tracks }) => from(tracks)),
-        single((track) => track.id === id),
-        catchError(() => {
-          throw new NotFoundException('Track not fav');
-        }),
-        switchMap((track) => this.db.deleteTrackFromFav(track)),
-        catchError(() => {
-          throw new HttpException('', HttpStatus.NO_CONTENT);
-        }),
+      this.getTrack(id).pipe(
+        switchMap(() => from(this.prisma.track.delete({ where: { id } }))),
       ),
     ]).pipe(map(() => true));
   }

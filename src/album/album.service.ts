@@ -1,48 +1,30 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { DbService } from '../db/db.service';
-import {
-  catchError,
-  forkJoin,
-  from,
-  map,
-  Observable,
-  single,
-  switchMap,
-  tap,
-} from 'rxjs';
-import { AlbumModel } from './album.model';
-import { Album } from './entity/album.entity';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { catchError, forkJoin, from, map, Observable, switchMap } from 'rxjs';
+import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class AlbumService {
-  constructor(private db: DbService) {}
+  constructor(private prisma: PrismaService) {}
 
-  getAllAlbums(): Observable<AlbumModel[]> {
-    return this.db.getAlbums();
+  getAllAlbums(): Observable<unknown> {
+    return from(this.prisma.album.findMany());
   }
 
-  getAlbum(id: string): Observable<AlbumModel> {
-    return this.db.getAlbums().pipe(
-      switchMap((albums) => from(albums)),
-      single((album) => album.id === id),
+  getAlbum(id: string): Observable<any> {
+    return from(this.prisma.album.findUnique({ where: { id } })).pipe(
+      map((res) => {
+        if (!res) throw '';
+        return res;
+      }),
       catchError(() => {
-        throw new NotFoundException('User not found');
+        throw new NotFoundException('Album not found');
       }),
     );
   }
 
-  createAlbum(
-    name: string,
-    year: number,
-    artistId?: string,
-  ): Observable<AlbumModel> {
-    const album: AlbumModel = new Album(name, year, artistId);
-    return this.db.setAlbum(album);
+  createAlbum(name: string, year: number, artistId?: string): Observable<any> {
+    const data = { name, year, artistId: artistId ?? null };
+    return from(this.prisma.album.create({ data }));
   }
 
   updateAlbum(
@@ -50,42 +32,27 @@ export class AlbumService {
     name?: string,
     year?: number,
     artistId?: string,
-  ): Observable<AlbumModel> {
+  ): Observable<any> {
     return this.getAlbum(id).pipe(
-      tap((album) => this.db.deleteAlbum(album)),
-      map((album) => {
-        return {
-          ...album,
-          name: name ?? album.name,
-          year: year ?? album.year,
-          artistId: artistId ?? album.artistId,
-        };
-      }),
-      switchMap((updatedAlbum) => this.db.setAlbum(updatedAlbum)),
+      switchMap((album) =>
+        from(
+          this.prisma.album.update({
+            where: { id },
+            data: {
+              name: name ?? album.name,
+              year: year ?? album.year,
+              artistId: artistId ?? album.artistId,
+            },
+          }),
+        ),
+      ),
     );
   }
 
   deleteAlbum(id: string): Observable<boolean> {
     return forkJoin([
-      this.getAlbum(id).pipe(switchMap((album) => this.db.deleteAlbum(album))),
-      this.db.getTracks().pipe(
-        switchMap((tracks) => from(tracks)),
-        single(({ albumId }) => albumId === id),
-        tap((track) => {
-          track.albumId = null;
-        }),
-        switchMap((track) => this.db.setTracks(track)),
-        catchError(() => {
-          throw new HttpException('', HttpStatus.NO_CONTENT);
-        }),
-      ),
-      this.db.getFavs().pipe(
-        switchMap(({ albums }) => from(albums)),
-        single((album) => album.id === id),
-        switchMap((album) => this.db.deleteAlbumFromFav(album)),
-        catchError(() => {
-          throw new HttpException('', HttpStatus.NO_CONTENT);
-        }),
+      this.getAlbum(id).pipe(
+        switchMap(() => from(this.prisma.album.delete({ where: { id } }))),
       ),
     ]).pipe(map(() => true));
   }

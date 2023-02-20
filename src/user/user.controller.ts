@@ -12,7 +12,6 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { UserModel } from './user.model';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-transfer.dto';
@@ -23,21 +22,19 @@ export class UserController {
   constructor(private userService: UserService) {}
 
   @Get()
-  getAll(): Observable<UserModel[]> {
+  getAll(): Observable<any> {
     return this.userService.getAllUsers();
   }
 
   @UsePipes(new IdPipe())
   @Get(':id')
-  getById(@Param() { id }: { id: string }): Observable<UserModel> {
+  getById(@Param() { id }: { id: string }): Observable<any> {
     return this.userService.getUser(id);
   }
 
   @Post()
   @UsePipes(new ValidationPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }))
-  create(
-    @Body() { login, password }: CreateUserDto,
-  ): Observable<Omit<UserModel, 'password'>> {
+  create(@Body() { login, password }: CreateUserDto): Observable<unknown> {
     return this.userService.createUser(login, password);
   }
 
@@ -47,14 +44,14 @@ export class UserController {
   update(
     @Param() { id }: { id: string },
     @Body() { oldPassword, newPassword }: UpdatePasswordDto,
-  ): Observable<Omit<UserModel, 'password'>> {
+  ): Observable<unknown> {
     return this.userService.updateUser(id, oldPassword, newPassword);
   }
 
   @Delete(':id')
   @UsePipes(new IdPipe())
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(@Param() { id }: { id: string }): Observable<UserModel> {
+  delete(@Param() { id }: { id: string }): Observable<any> {
     return this.userService.deleteUser(id);
   }
 }

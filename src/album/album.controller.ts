@@ -14,7 +14,6 @@ import {
 import { Observable } from 'rxjs';
 import { IdPipe } from '../pipes/id.pipe';
 import { AlbumService } from './album.service';
-import { AlbumModel } from './album.model';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { UpdateAlbumDto } from './dto/update-album.dto';
 
@@ -23,13 +22,13 @@ export class AlbumController {
   constructor(private albumService: AlbumService) {}
 
   @Get()
-  getAll(): Observable<AlbumModel[]> {
+  getAll(): Observable<unknown> {
     return this.albumService.getAllAlbums();
   }
 
   @UsePipes(new IdPipe())
   @Get(':id')
-  getById(@Param() { id }: { id: string }): Observable<AlbumModel> {
+  getById(@Param() { id }: { id: string }): Observable<unknown> {
     return this.albumService.getAlbum(id);
   }
 
@@ -37,7 +36,7 @@ export class AlbumController {
   @UsePipes(new ValidationPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }))
   create(
     @Body() { name, year, artistId }: CreateAlbumDto,
-  ): Observable<AlbumModel> {
+  ): Observable<unknown> {
     return this.albumService.createAlbum(name, year, artistId);
   }
 
@@ -47,7 +46,7 @@ export class AlbumController {
   update(
     @Param() { id }: { id: string },
     @Body() { name, year, artistId }: UpdateAlbumDto,
-  ): Observable<AlbumModel> {
+  ): Observable<unknown> {
     return this.albumService.updateAlbum(id, name, year, artistId);
   }
 
