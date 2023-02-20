@@ -15,7 +15,6 @@ import {
 import { UpdateArtistDto } from './dto/update-artist.dto';
 import { ArtistService } from './artist.service';
 import { Observable } from 'rxjs';
-import { ArtistModel } from './artist.model';
 import { IdPipe } from '../pipes/id.pipe';
 
 @Controller('artist')
@@ -23,19 +22,19 @@ export class ArtistController {
   constructor(private artistService: ArtistService) {}
 
   @Get()
-  getAll(): Observable<ArtistModel[]> {
+  getAll(): Observable<unknown[]> {
     return this.artistService.getAllArtists();
   }
 
   @UsePipes(new IdPipe())
   @Get(':id')
-  getById(@Param() { id }: { id: string }): Observable<ArtistModel> {
+  getById(@Param() { id }: { id: string }): Observable<unknown> {
     return this.artistService.getArtist(id);
   }
 
   @Post()
   @UsePipes(new ValidationPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }))
-  create(@Body() { name, grammy }: CreateArtistDto): Observable<ArtistModel> {
+  create(@Body() { name, grammy }: CreateArtistDto): Observable<unknown> {
     return this.artistService.createArtist(name, grammy);
   }
 
@@ -45,7 +44,7 @@ export class ArtistController {
   update(
     @Param() { id }: { id: string },
     @Body() { name, grammy }: UpdateArtistDto,
-  ): Observable<ArtistModel> {
+  ): Observable<unknown> {
     return this.artistService.updateArtist(id, name, grammy);
   }
 

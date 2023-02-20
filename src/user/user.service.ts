@@ -3,43 +3,36 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  catchError,
-  from,
-  map,
-  Observable,
-  single,
-  switchMap,
-  tap,
-} from 'rxjs';
-import { UserModel } from './user.model';
-import { DbService } from '../db/db.service';
-import { User } from './entity/user.entity';
+import { catchError, from, map, Observable, switchMap, tap } from 'rxjs';
+import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class UserService {
-  constructor(private db: DbService) {}
+  constructor(private prisma: PrismaService) {}
 
-  getAllUsers(): Observable<UserModel[]> {
-    return this.db.getUsers();
+  getAllUsers(): Observable<unknown> {
+    return from(this.prisma.user.findMany());
   }
 
-  createUser(
-    login: string,
-    password: string,
-  ): Observable<Omit<UserModel, 'password'>> {
-    const user: UserModel = new User(login, password);
-    return this.db.setUsers(user).pipe(
-      map(({ password, ...rest }) => {
-        return { ...rest, version: ++rest.version };
+  createUser(login: string, password: string): Observable<any> {
+    const data = { login, password, version: 1 };
+    return from(this.prisma.user.create({ data })).pipe(
+      map(({ password, createdAt, updatedAt, ...rest }) => {
+        return {
+          ...rest,
+          createdAt: new Date(createdAt).getTime(),
+          updatedAt: new Date(updatedAt).getTime(),
+        };
       }),
     );
   }
 
-  getUser(id: string): Observable<UserModel> {
-    return this.db.getUsers().pipe(
-      switchMap((users) => from(users)),
-      single((user) => user.id === id),
+  getUser(id: string): Observable<any> {
+    return from(this.prisma.user.findUnique({ where: { id } })).pipe(
+      map((res) => {
+        if (!res) throw '';
+        return res;
+      }),
       catchError(() => {
         throw new NotFoundException('User not found');
       }),
@@ -50,29 +43,35 @@ export class UserService {
     id: string,
     oldPassword: string,
     password: string,
-  ): Observable<Omit<UserModel, 'password'>> {
+  ): Observable<any> {
     return this.getUser(id).pipe(
       tap((user) => {
         if (user.password !== oldPassword)
           throw new ForbiddenException('Wrong password');
       }),
-      tap((user) => this.db.deleteUser(user)),
-      map((user) => {
+      switchMap(() =>
+        from(
+          this.prisma.user.update({
+            where: { id },
+            data: { password, version: { increment: 1 } },
+          }),
+        ),
+      ),
+      map(({ password, createdAt, updatedAt, ...rest }) => {
         return {
-          ...user,
-          password,
-          version: ++user.version,
-          updatedAt: new Date().getTime(),
+          ...rest,
+          createdAt: new Date(createdAt).getTime(),
+          updatedAt: new Date(updatedAt).getTime(),
         };
-      }),
-      switchMap((updatedUser) => this.db.setUsers(updatedUser)),
-      map(({ password, ...rest }) => {
-        return { ...rest, version: ++rest.version };
       }),
     );
   }
 
-  deleteUser(id: string): Observable<UserModel> {
-    return this.getUser(id).pipe(switchMap((user) => this.db.deleteUser(user)));
+  deleteUser(id: string): Observable<any> {
+    return from(this.prisma.user.delete({ where: { id } })).pipe(
+      catchError(() => {
+        throw new NotFoundException('User not found');
+      }),
+    );
   }
 }

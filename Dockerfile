@@ -4,6 +4,7 @@ ADD package.json package.json
 RUN npm install
 ADD . .
 RUN npm run build
+RUN npm run start:generate
 
 FROM node:18.12.1-alpine
 COPY --from=production /app/node_modules ./node_modules

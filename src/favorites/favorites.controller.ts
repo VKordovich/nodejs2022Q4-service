@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { FavoritesService } from './favorites.service';
 import { Observable } from 'rxjs';
-import { FavoritesModel } from './favorites.model';
 import { IdPipe } from '../pipes/id.pipe';
 
 @Controller('favs')
@@ -18,14 +17,14 @@ export class FavoritesController {
   constructor(private favoritesService: FavoritesService) {}
 
   @Get()
-  getAll(): Observable<FavoritesModel> {
+  getAll(): Observable<unknown[]> {
     return this.favoritesService.getAllFavs();
   }
 
   @Post('track/:id')
   @UsePipes(new IdPipe())
   @HttpCode(HttpStatus.CREATED)
-  tracks(@Param() { id }: { id: string }): Observable<FavoritesModel> {
+  tracks(@Param() { id }: { id: string }): Observable<unknown> {
     return this.favoritesService.addTrackToFav(id);
   }
 
@@ -39,7 +38,7 @@ export class FavoritesController {
   @Post('album/:id')
   @UsePipes(new IdPipe())
   @HttpCode(HttpStatus.CREATED)
-  albums(@Param() { id }: { id: string }): Observable<FavoritesModel> {
+  albums(@Param() { id }: { id: string }): Observable<unknown> {
     return this.favoritesService.addAlbumToFav(id);
   }
 
@@ -53,7 +52,7 @@ export class FavoritesController {
   @Post('artist/:id')
   @UsePipes(new IdPipe())
   @HttpCode(HttpStatus.CREATED)
-  artists(@Param() { id }: { id: string }): Observable<FavoritesModel> {
+  artists(@Param() { id }: { id: string }): Observable<unknown> {
     return this.favoritesService.addArtistToFav(id);
   }
 

@@ -13,7 +13,6 @@ import {
 } from '@nestjs/common';
 import { TrackService } from './track.service';
 import { Observable } from 'rxjs';
-import { TrackModel } from './track.model';
 import { IdPipe } from '../pipes/id.pipe';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
@@ -23,13 +22,13 @@ export class TrackController {
   constructor(private trackService: TrackService) {}
 
   @Get()
-  getAll(): Observable<TrackModel[]> {
+  getAll(): Observable<unknown> {
     return this.trackService.getAllTracks();
   }
 
   @UsePipes(new IdPipe())
   @Get(':id')
-  getById(@Param() { id }: { id: string }): Observable<TrackModel> {
+  getById(@Param() { id }: { id: string }): Observable<unknown> {
     return this.trackService.getTrack(id);
   }
 
@@ -37,7 +36,7 @@ export class TrackController {
   @UsePipes(new ValidationPipe({ errorHttpStatusCode: HttpStatus.BAD_REQUEST }))
   create(
     @Body() { name, duration, artistId, albumId }: CreateTrackDto,
-  ): Observable<TrackModel> {
+  ): Observable<unknown> {
     return this.trackService.createTrack(name, duration, artistId, albumId);
   }
 
@@ -47,7 +46,7 @@ export class TrackController {
   update(
     @Param() { id }: { id: string },
     @Body() { name, duration, artistId, albumId }: UpdateTrackDto,
-  ): Observable<TrackModel> {
+  ): Observable<unknown> {
     return this.trackService.updateTrack(id, name, duration, artistId, albumId);
   }
 
