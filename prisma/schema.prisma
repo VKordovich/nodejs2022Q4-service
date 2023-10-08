@@ -1,0 +1,69 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "darwin"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  login     String   @db.VarChar(255)
+  password  String
+  version   Int @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map(name: "user")
+}
+
+model Track {
+  id       String  @id @default(uuid())
+  name     String  @db.VarChar(255)
+  artist   Artist? @relation(fields: [artistId], references: [id])
+  album    Album?  @relation(fields: [albumId], references: [id])
+  artistId String?
+  albumId  String?
+  duration Int
+  fav      Favorites?
+
+  @@map(name: "track")
+}
+
+model Album {
+  id       String  @id @default(uuid())
+  name     String  @db.VarChar(255)
+  year     Int
+  artist   Artist? @relation(fields: [artistId], references: [id])
+  artistId String?
+  track    Track[]
+  fav      Favorites?
+
+  @@map(name: "album")
+}
+
+model Artist {
+  id       String     @id @default(uuid())
+  name     String     @db.VarChar(255)
+  grammy   Boolean?
+  track    Track[]
+  album    Album[]
+  fav      Favorites?
+
+  @@map(name: "artist")
+}
+
+model Favorites {
+  id       String  @id @default(uuid())
+  artist   Artist? @relation(fields: [artistId], references: [id])
+  artistId String? @unique
+  album   Album? @relation(fields: [albumId], references: [id])
+  albumId String? @unique
+  track   Track? @relation(fields: [trackId], references: [id])
+  trackId String? @unique
+
+  @@unique([artistId, albumId, trackId])
+  @@map(name: "fav")
+}
